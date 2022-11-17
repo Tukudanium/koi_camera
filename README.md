@@ -5,7 +5,6 @@ snowのような顔認識での顔差し替えアプリを作成して面白味�
 
 仮想環境起動
 ```
-
 .flask\Scripts\activate.ps1
 pip install -r requirements.txt
 ```
