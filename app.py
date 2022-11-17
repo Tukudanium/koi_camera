@@ -38,6 +38,7 @@ def save_page():
     return render_template("result.html")
 
 #動画のURL
+#撮影画面のimgにこのURLをsrcに設定することでストリーミング再生を実装している
 @app.route('/video')
 def video_feed():
     global stop_run
@@ -75,7 +76,7 @@ def koichange_api(image_name):
 #################
 
 # 重ねる画像
-img_module_dir = os.path.dirname(__file__)
+img_module_dir = os.path.dirname(__file__) + '\image'
 img_file_path = os.path.join(img_module_dir, 'tai.png')
 # https://github.com/opencv/opencv/tree/master/data/haarcascades
 # 顔認識用学習済みデータ　カスケード分類器
@@ -123,7 +124,7 @@ def getFrames():
                         #color = (255, 100, 100)
                         #cv2.rectangle(frame, tuple(rect[0:2]), tuple( rect[0:2]+rect[2:4]), color, thickness=2)
                         faceImg = cv2.resize(
-                            faceImg, ((int)(rect[2] * 1.6), (int)(rect[3] * 1.6)), cv2.IMREAD_UNCHANGED)
+                            faceImg, ((int)(rect[2] * 1.3), (int)(rect[3] * 1.3)), cv2.IMREAD_UNCHANGED)
                         rect[0] -= rect[2] * 0.15  # x_offset
                         rect[1] -= rect[3] * 0.15  # y_offset
                         # 顔の部分に画像挿入
