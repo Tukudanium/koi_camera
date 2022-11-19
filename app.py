@@ -6,7 +6,7 @@ from flask_bootstrap import Bootstrap
 from PIL import Image
 import numpy as np
 
-app = Flask(__name__, static_folder='./images')
+app = Flask(__name__, static_folder='./image')
 bootstrap = Bootstrap(app)
 
 image = '' #差し替え後の画像の保存位置
