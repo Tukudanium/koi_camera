@@ -8,6 +8,7 @@ import numpy as np
 
 app = Flask(__name__, static_folder='./image')
 bootstrap = Bootstrap(app)
+app.secret_key = 'hogehogegaogao'
 
 image = '' #差し替え後の画像の保存位置
 stop_run = False #カメラのオンオフ
@@ -59,17 +60,22 @@ def upload_page():
         return render_template("upload.html")
     if request.method == 'POST':
         if 'input_file' not in request.files:
-            return redirect(request.url)
+            return render_template("upload.html")
         # データの取り出し
         file = request.files['input_file']
         # ファイル名がなかった時の処理
         if file.filename == '':
-            return redirect(request.url)
+            return render_template("upload.html")
         data = request.files['input_file']
+        #来たファイルをnpArrayに変換
         img = Image.open(data)
         result = cv2.cvtColor(np.array(img), cv2.COLOR_BGR2RGB)
-        face_to_image(result)
-        return redirect(url_for('save_page'))
+        facecheck = face_to_image(result)
+        #顔が見つからなかった時
+        if not facecheck:
+            return render_template("upload.html")
+        else:
+            return redirect(url_for('save_page'))
 
 
 #################
@@ -85,6 +91,7 @@ def image_api():
         text = str(b64encode(image), "utf-8")
         message = {'image': text}
         return jsonify(message)
+    return
 
 #顔差し替え画像変更API jsで呼び出す
 #顔に重ねる画像を、URLで指定された名前のPNG画像に変更する
@@ -94,6 +101,7 @@ def koichange_api(image_name):
         global img_file_path
         img_file_path = os.path.join(img_module_dir, image_name + '.png')
         return ("nothing")
+    return
 
 
 #################
@@ -173,41 +181,104 @@ def getFrames():
     stopped = True
     return
 
+#POSTされた画像ファイルの顔認識
+#ループしない
 def face_to_image(image_item):
     frame = image_item
     aveSize = 0
     count = 0
+    global image #現在の画像を更新
     image_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    faceImg = cv2.imread(img_file_path, cv2.IMREAD_UNCHANGED) #画像
     facerect = cascade.detectMultiScale(image_gray, scaleFactor=1.1, minNeighbors=2, minSize=(30, 30)) #顔の範囲を取得
     # 顔を検出した場合
-    if len(facerect) > 0:
-        for rect in facerect:
-            count += 1
-            if count < 4:
-                aveSize += (rect[2] + rect[3]) / 2
-                break
-            elif count == 4:
-                aveSize += (rect[2] + rect[3]) / 2
-                aveSize /= 5
-            else:
-                aveSize = aveSize * 0.8 + rect[2] * 0.1 + rect[3] * 0.1
-            thresh = aveSize * 0.95  # 移動平均の95%以上を閾値
-            if rect[2] < thresh or rect[3] < thresh:
-                break
-            # 検出した顔を囲む矩形の作成
-            #color = (255, 100, 100)
-            #cv2.rectangle(frame, tuple(rect[0:2]), tuple( rect[0:2]+rect[2:4]), color, thickness=2)
-            faceImg = cv2.resize(
-                faceImg, ((int)(rect[2] * 1.3), (int)(rect[3] * 1.3)), cv2.IMREAD_UNCHANGED)
-            rect[0] -= rect[2] * 0.15  # x_offset
-            rect[1] -= rect[3] * 0.15  # y_offset
-            # 顔の部分に画像挿入
-            #FIXME 顔を大きく近づけたり、画面端に顔があるとエラー
-            #      おそらく表示している画面の範囲を顔の認識部分が超えてしまったことによる
-            #      強制終了する訳では無いが、エラー中は重ねる画像は出ない
-            frame[rect[1]:rect[1] + faceImg.shape[0],rect[0]:rect[0] + faceImg.shape[1]] = frame[rect[1]:rect[1] + faceImg.shape[0], rect[0]:rect[0] + faceImg.shape[1]] * (1 - faceImg[:, :, 3:] / 255) + faceImg[:, :, :3] * (faceImg[:, :, 3:] / 255)
-    global image #現在の画像を更新
-    ret, image = cv2.imencode(".jpg", frame)
+    try:
+        if len(facerect) > 0:
+            for rect in facerect:
+                count += 1
+                if count < 4:
+                    aveSize += (rect[2] + rect[3]) / 2
+                    #break
+                elif count == 4:
+                    aveSize += (rect[2] + rect[3]) / 2
+                    aveSize /= 5
+                else:
+                    aveSize = aveSize * 0.8 + rect[2] * 0.1 + rect[3] * 0.1
+                thresh = aveSize * 0.95  # 移動平均の95%以上を閾値
+                if rect[2] < thresh or rect[3] < thresh:
+                    break
+                # 検出した顔を囲む矩形の作成
+                #color = (255, 100, 100)
+                #cv2.rectangle(frame, tuple(rect[0:2]), tuple( rect[0:2]+rect[2:4]), color, thickness=2)
+                faceImg = cv2.resize(
+                    faceImg, ((int)(rect[2] * 1.3), (int)(rect[3] * 1.3)), cv2.IMREAD_UNCHANGED)
+                rect[0] -= rect[2] * 0.15  # x_offset
+                rect[1] -= rect[3] * 0.15  # y_offset
+                # 顔の部分に画像挿入
+                #FIXME 顔を大きく近づけたり、画面端に顔があるとエラー
+                #      おそらく表示している画面の範囲を顔の認識部分が超えてしまったことによる
+                #      強制終了する訳では無いが、エラー中は重ねる画像は出ない
+                frame[rect[1]:rect[1] + faceImg.shape[0],rect[0]:rect[0] + faceImg.shape[1]] = frame[rect[1]:rect[1] + faceImg.shape[0], rect[0]:rect[0] + faceImg.shape[1]] * (1 - faceImg[:, :, 3:] / 255) + faceImg[:, :, :3] * (faceImg[:, :, 3:] / 255)
+        ret, image = cv2.imencode(".jpg", frame)
+        return True
+    except:
+        print ('=== getFrames() エラー内容 ===')
+        import traceback
+        traceback.print_exc() #エラー表示
+        print ('=============================')
+        ret, image = cv2.imencode(".jpg", frame)
+        return False
+    return
+
+
+
+@app.route('/videomake',methods=['POST'])
+def videomake():
+    if request.method == 'POST':
+        frame = image_item
+        aveSize = 0
+        count = 0
+        global image #現在の画像を更新
+        image_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faceImg = cv2.imread(img_file_path, cv2.IMREAD_UNCHANGED) #画像
+        facerect = cascade.detectMultiScale(image_gray, scaleFactor=1.1, minNeighbors=2, minSize=(30, 30)) #顔の範囲を取得
+        # 顔を検出した場合
+        try:
+            if len(facerect) > 0:
+                for rect in facerect:
+                    count += 1
+                    if count < 4:
+                        aveSize += (rect[2] + rect[3]) / 2
+                        #break
+                    elif count == 4:
+                        aveSize += (rect[2] + rect[3]) / 2
+                        aveSize /= 5
+                    else:
+                        aveSize = aveSize * 0.8 + rect[2] * 0.1 + rect[3] * 0.1
+                    thresh = aveSize * 0.95  # 移動平均の95%以上を閾値
+                    if rect[2] < thresh or rect[3] < thresh:
+                        break
+                    # 検出した顔を囲む矩形の作成
+                    #color = (255, 100, 100)
+                    #cv2.rectangle(frame, tuple(rect[0:2]), tuple( rect[0:2]+rect[2:4]), color, thickness=2)
+                    faceImg = cv2.resize(
+                        faceImg, ((int)(rect[2] * 1.3), (int)(rect[3] * 1.3)), cv2.IMREAD_UNCHANGED)
+                    rect[0] -= rect[2] * 0.15  # x_offset
+                    rect[1] -= rect[3] * 0.15  # y_offset
+                    # 顔の部分に画像挿入
+                    #FIXME 顔を大きく近づけたり、画面端に顔があるとエラー
+                    #      おそらく表示している画面の範囲を顔の認識部分が超えてしまったことによる
+                    #      強制終了する訳では無いが、エラー中は重ねる画像は出ない
+                    frame[rect[1]:rect[1] + faceImg.shape[0],rect[0]:rect[0] + faceImg.shape[1]] = frame[rect[1]:rect[1] + faceImg.shape[0], rect[0]:rect[0] + faceImg.shape[1]] * (1 - faceImg[:, :, 3:] / 255) + faceImg[:, :, :3] * (faceImg[:, :, 3:] / 255)
+            ret, image = cv2.imencode(".jpg", frame)
+            yield (b'--boundary\r\nContent-Type: image/jpeg\r\n\r\n' + image.tostring() + b'\r\n\r\n')
+        except:
+            print ('=== getFrames() エラー内容 ===')
+            import traceback
+            traceback.print_exc() #エラー表示
+            print ('=============================')
+            ret, image = cv2.imencode(".jpg", frame)
+            return False
     return
 
 

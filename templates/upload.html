@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>鯉カメラ</title>
+</head>
+<body>
+    {% extends "bootstrap/base.html" %}
+
+    {% block navbar %}
+    <div class="navbar navbar-fixed-top">
+    <!-- ... -->
+    </div>
+    {% endblock %}
+
+    {% block content %}
+    <div>
+    <div class="text-center">
+        <div class="text-center" style="">
+            <h2>写真から変換</h2>
+            <h3>顔が写った写真を変換できます。</h3>
+            <h3>顔が見つからなかったときは何も出ません、注意してね。</h3>
+        </div>
+        <div class="text-center">
+            <h4 style="margin-top: 40px;">変換先選択</h4>
+            <button type="button" class="btn btn-primary btn-lg"
+            style="margin: 5px;"
+            onclick="changeImage('esa_agenaide')">鯉</button>
+            <button type="button" class="btn btn-primary btn-lg"
+            style="margin: 5px;"
+            onclick="changeImage('realkoi')">鯉（リアル）</button>
+            <button type="button" class="btn btn-primary btn-lg"
+            style="margin: 5px;"
+            onclick="changeImage('tai')">鯛</button>
+        </div>
+        <form action="/upload" method="POST" enctype="multipart/form-data" style="display: inline-grid;">
+            <div class="text-center" style="">
+                <label for="input_file">画像を選択</label>
+                <input type="file" label="ファイル" name="input_file" id="input_file"
+                style="width: 300px; height: 100px; border: dashed; border-radius: 4px;">
+            </div>
+            <div class="text-center" style="display: inline-block;">
+                <input type="submit" class="btn btn-primary btn-lg" style="margin: 30px;" value="変換！">
+            </div>
+        </form>
+    </div>
+    <script>
+        changeImage = (imageName) => {
+            // flaskで作成したAPIから画像を取得する
+            fetch('/koiChange/' + imageName)
+            .then(function (response) {
+                windows.alart('change')
+                return;
+            });
+        }
+    </script>
+    {% endblock %}
+</body>
+</html>
