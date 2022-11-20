@@ -21,6 +21,15 @@ stopped = True #動画停止用フラグ
 
 #動画を表示するURL
 @app.route('/',methods=['POST','GET'])
+def top_page():
+    if request.method == 'GET':
+        global stop_run
+        stop_run = True #カメラを止める
+
+        return render_template("toppage.html")
+
+#動画を表示するURL
+@app.route('/camera',methods=['POST','GET'])
 def main_page():
     if request.method == 'GET':
         global stop_run
@@ -229,58 +238,6 @@ def face_to_image(image_item):
         ret, image = cv2.imencode(".jpg", frame)
         return False
     return
-
-
-
-@app.route('/videomake',methods=['POST'])
-def videomake():
-    if request.method == 'POST':
-        frame = image_item
-        aveSize = 0
-        count = 0
-        global image #現在の画像を更新
-        image_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faceImg = cv2.imread(img_file_path, cv2.IMREAD_UNCHANGED) #画像
-        facerect = cascade.detectMultiScale(image_gray, scaleFactor=1.1, minNeighbors=2, minSize=(30, 30)) #顔の範囲を取得
-        # 顔を検出した場合
-        try:
-            if len(facerect) > 0:
-                for rect in facerect:
-                    count += 1
-                    if count < 4:
-                        aveSize += (rect[2] + rect[3]) / 2
-                        #break
-                    elif count == 4:
-                        aveSize += (rect[2] + rect[3]) / 2
-                        aveSize /= 5
-                    else:
-                        aveSize = aveSize * 0.8 + rect[2] * 0.1 + rect[3] * 0.1
-                    thresh = aveSize * 0.95  # 移動平均の95%以上を閾値
-                    if rect[2] < thresh or rect[3] < thresh:
-                        break
-                    # 検出した顔を囲む矩形の作成
-                    #color = (255, 100, 100)
-                    #cv2.rectangle(frame, tuple(rect[0:2]), tuple( rect[0:2]+rect[2:4]), color, thickness=2)
-                    faceImg = cv2.resize(
-                        faceImg, ((int)(rect[2] * 1.3), (int)(rect[3] * 1.3)), cv2.IMREAD_UNCHANGED)
-                    rect[0] -= rect[2] * 0.15  # x_offset
-                    rect[1] -= rect[3] * 0.15  # y_offset
-                    # 顔の部分に画像挿入
-                    #FIXME 顔を大きく近づけたり、画面端に顔があるとエラー
-                    #      おそらく表示している画面の範囲を顔の認識部分が超えてしまったことによる
-                    #      強制終了する訳では無いが、エラー中は重ねる画像は出ない
-                    frame[rect[1]:rect[1] + faceImg.shape[0],rect[0]:rect[0] + faceImg.shape[1]] = frame[rect[1]:rect[1] + faceImg.shape[0], rect[0]:rect[0] + faceImg.shape[1]] * (1 - faceImg[:, :, 3:] / 255) + faceImg[:, :, :3] * (faceImg[:, :, 3:] / 255)
-            ret, image = cv2.imencode(".jpg", frame)
-            yield (b'--boundary\r\nContent-Type: image/jpeg\r\n\r\n' + image.tostring() + b'\r\n\r\n')
-        except:
-            print ('=== getFrames() エラー内容 ===')
-            import traceback
-            traceback.print_exc() #エラー表示
-            print ('=============================')
-            ret, image = cv2.imencode(".jpg", frame)
-            return False
-    return
-
 
 #ブラウザでローカルホストを自動で開くだけ
 import webbrowser

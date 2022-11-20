@@ -55,45 +55,7 @@
     //}
     //成功した時にsuccess function　失敗した時にfail functionを呼び出せるように定義しておく
     //navigator.geolocation.getCurrentPosition(success,fail);
-    var stream;
-    var video;
 
-    navigator.mediaDevices.getUserMedia({video: true, audio: false}).then(async function (stream) {
-      stream = stream;
-      video = document.getElementById('video');
-      video.src = window.URL.createObjectURL(stream);
-      video.play();
-      while(true){
-        var canvas = document.getElementById('canvas');
-        var ctx = canvas.getContext('2d');
-        await setTimeout(async function() {
-          var w = video.offsetWidth;
-          var h = video.offsetHeight;
-          canvas.setAttribute('width', w);
-          canvas.setAttribute('height', h);
-          ctx.drawImage(video, 0, 0, w, h);
-          canvas.toBlob(async function(blob) {
-            var img = document.getElementById('image');
-            img.src = window.URL.createObjectURL(blob);
-            await fetch('/videomake' , {
-              method: 'POST', // メソッド
-              header: { // ヘッダー指定
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(img) // 送信データをセット（ここでJSON形式に変換）
-            })
-            .then(function (response) {
-              return;
-            });
-          }, 'image/jpeg', 0.95);
-          stream.getTracks()[0].stop();
-        }, 1000);
-      }
-
-    }).catch(function (error) {
-      console.error('mediaDevice.getUserMedia() error:', error);
-      return;
-    });
   </script>
   {% endblock %}
 </body>

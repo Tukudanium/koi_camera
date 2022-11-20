@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <title>鯉カメラ</title>
+  </head>
+  <body style="background-color:#93cef5;">
+    <!-- <div class="text-center">
+        <p class="display-1">鯉カメラ</p>
+    </div><br> -->
+    <div>
+        <img src="image/logo.png" class="rounded mx-auto d-block" alt="アプリタイトル">
+    </div><br>
+
+    <div>
+        <img id="mypic" src="image/koriyama_koi_dosukoi.jpg" class="rounded mx-auto d-block" alt="鯉のイラスト" width="200" height="150">
+            <script>
+                var pics_src = new Array("image/koriyama_koi_dosukoi.jpg","image/koriyama_koi_menkoi.jpg","image/koriyama_koi_dokkoi_yokkoi.jpg");
+                var num = -1;
+ 
+                slideshow_timer();
+ 
+                function slideshow_timer(){
+                    if (num == 2){
+                        num = 0;
+                    } 
+                    else {
+                        num ++;
+                    }
+                    document.getElementById("mypic").src=pics_src[num];
+                    setTimeout("slideshow_timer()",1000); 
+                }
+            </script>
+
+    </div><br><br>
+    <div class="d-grid gap-2 col-6 mx-auto">
+        <a type="button" class="btn btn-primary btn-lg" href="{{ url_for('main_page')}}">カメラ起動</a>
+    </div><br>
+    <div class="d-grid gap-2 col-6 mx-auto">
+        <a type="button" class="btn btn-primary btn-lg" href="{{ url_for('upload_page')}}">写真変換</a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+  </body>
+</html>
